@@ -2,55 +2,75 @@
 #include <stdio.h>
 #include "svpng.inc"
 #pragma warning(disable:4996)
+#define STRING(x) #x   //å¤„ç†å­—ç¬¦ä¸²ï¼ŒSTRING(a_string)  å±•å¼€åä¸ºï¼š  "a_string"
+#define TO_STRING(x) STRING(x)//ä¸ºäº†å®çš„åµŒå¥—è°ƒç”¨ï¼Œå¦åˆ™STRING(FILE_NAME)ä¼šè¾“å‡º"FILE_NAME"
 
-#define SHIFT_X        -2.1     //-2.0  Êı×Ö±äĞ¡=Í¼Æ¬ÓÒÒÆ
-#define SHIFT_Y        -1.2    //-1.0  Êı×Ö±äĞ¡=Í¼Æ¬ÏÂÒÆ
+//------------------------------------------------------
+//Small_Totem 2020.10.28
 
-#define PIXEL_X        1300 //1536
-#define PIXEL_Y        1200   //1024
+//å›¾åƒä¸­å¿ƒçš„x,yåæ ‡
+#define CENTER_X       -0.8//-0.8//-1.75
+#define CENTER_Y	0//-0.9//-0.185
 
-#define PIXEL_times    6  //äÖÈ¾±¶ÂÊ£¬Êı×ÖÔ½´óÔ½ÇåÎú£¬µ«ÊÇ¹íÖªµÀÒª¶à¾Ã
-								//1920x1080 4±¶ ´ó¸ÅÓÃÁË°ë·ÖÖÓ(i7-9750h)£¬Í¼Æ¬Ô¼100mb
-								//1080x800 10±¶ 1·Ö40Ãë  253mb
-								//1600*1400 10±¶ 1·Ö40Ãë 640mb£¨×¼È·Êı¾İ£©
-								//1300x1200 12±¶ 1·Ö55Ãë 642mb£¨×¼È·Êı¾İ£©
-#define SCALE          512.0  //512.0 Êı×ÖÔ½´óÔò±¶ÂÊÔ½´ó
+//æ¸²æŸ“å›¾åƒçš„åˆ†è¾¨ç‡
+#define PIXEL_X        1200   //1536
+#define PIXEL_Y        750 //1024
+
+//æ¸²æŸ“å›¾åƒçš„æ¸…æ™°åº¦å€ç‡ï¼ˆå…¶å®å°±æ˜¯å¢åŠ åˆ†è¾¨ç‡ï¼‰//æ•°å­—è¶Šå¤§è¶Šæ¸…æ™°ï¼Œä½†æ˜¯é¬¼çŸ¥é“è¦å¤šä¹…
+#define PIXEL_times    1 
+
+//å›¾åƒç¼©æ”¾å€ç‡ï¼Œä¸å½±å“æ¸²æŸ“é€Ÿåº¦
+#define SCALE          512.0  //è¿™ä¸ªæ˜¯æ ‡å‡†ç¼©æ”¾å¤§å°ï¼Œä¸è¦æ”¹
 #define SCALE_times    1
 
-/*Ä¿Ç°ÊÔ¹ı¶øÇÒ²»ÊÇºÜ³óµÄº¯Êı:
-double c =  a*a - b*b/a + x
+//ç”Ÿæˆçš„æ–‡ä»¶å
+#define FILE_NAME      my_test.png  
 
+/*ç›®å‰è¯•è¿‡è€Œä¸”ä¸æ˜¯å¾ˆä¸‘çš„å‡½æ•°:
+		double c =  a*a - b*b/a + x
+		double c =  a*(a+b) - b*(a-b) + x, d = 2*a * b + y;
 
 */
-
 
 double mandelbrot(double x, double y) {
 	double a = x, b = y;
 	for (int i = 0; i < 128; ++i) {
-		double c =  a*a - b*b + x, d = 2 * a * b + y;
+		double c =  a*a - b*b + x, d = 2*a * b + y;
 		a = c, b = d;
-		if (a * a + b * b > 4) return 1 - i / 128.0;
+		if (a*a+b*b > 4) return 1 - i / 128.0;
 	}
 	return 0;
 }
 
-uint8_t data[PIXEL_Y* PIXEL_times * PIXEL_X * PIXEL_times * 3];
+uint8_t data[(PIXEL_Y) * (PIXEL_times) * (PIXEL_X) * (PIXEL_times) * 3];
 
 int main(void) {
-	printf("ÕıÔÚäÖÈ¾\n");
+	printf("æ­£åœ¨æ¸²æŸ“\n");
 	uint8_t* p = data;
-	for (int i = 0; i < PIXEL_Y * PIXEL_times; ++i) {
-		for (int j = 0; j < PIXEL_X * PIXEL_times; ++j) {
-			uint8_t n = mandelbrot(j / (SCALE* SCALE_times* PIXEL_times) +(SHIFT_X),
-				                   i / (SCALE* SCALE_times* PIXEL_times) +(SHIFT_Y)) * 255;
-			if(n>235){*p++ = n; *p++ = n; *p++ =n;}   //ºÚ°×  Êı×ÖÔ½´óÔòÔ½Í¸Ã÷
-			else if(n>210){*p++ = 0; *p++ = 0; *p++ = n;}  //À¶
-			else if (n > 160) { *p++ = 0; *p++ = n; *p++ = 0; }  //ÂÌ
-			else { *p++ = n; *p++ = 0; *p++ = 0; }  // ºì
+	double temp_i = (PIXEL_Y) * (PIXEL_times);
+	double temp_j = (PIXEL_X) * (PIXEL_times);
+	double temp_scale=(SCALE)* (SCALE_times)*(PIXEL_times);
+
+	for (int i = 0; i < temp_i; ++i) {
+		for (int j = 0; j < temp_j; ++j) {
+			uint8_t n = mandelbrot((CENTER_X)-temp_j / (2 * temp_scale) + j / temp_scale,
+								   (CENTER_Y)-temp_i / (2 * temp_scale) + i / temp_scale) * 255;
+			//è¶Šæ¥è¿‘mandelbroté›†åˆå†…ï¼Œåˆ™nå€¼è¶Šé«˜
+
+			if (n > 230) { *p++ = n; *p++ = n; *p++ = n; }   //é»‘ç™½  æ•°å­—è¶Šå¤§åˆ™è¶Šé€æ˜
+			else if (n > 200) { *p++ = 0; *p++ = n; *p++ = 0; }  //ç»¿
+			else if (n > 160) { *p++ = n+20; *p++ = n; *p++ = 0; }  //é»„
+			else if (n > 120) { *p++ = 0; *p++ = 0; *p++ = n + 90.0; }  //æµ…è“
+			else if (n > 80) { *p++ = 0; *p++ = 0; *p++ = n+40.0; }  //æ·±è“
+			else if (n > 40) { *p++ = n; *p++ = 0; *p++ = n+50.0; }  //ç´«
+			else if (n > 10) { *p++ = n + 80.0; *p++ = 0; *p++ = 0; }  // çº¢
+			else { *p++ = n ; *p++ = 0; *p++ = 0; }  //çº¢ï¼Œä½†ä¸åŠ é²œè‰³åº¦
 		}
 	}
-	FILE* file = fopen("test.png", "wb");
-	svpng(file, PIXEL_X * PIXEL_times, PIXEL_Y * PIXEL_times, data, 0);
+	FILE* file = fopen(TO_STRING(FILE_NAME), "wb");
+	svpng(file, (PIXEL_X) * (PIXEL_times), (PIXEL_Y) * (PIXEL_times), data, 0);
 	fclose(file);
-	printf("Íê³É\n");
+	printf("å®Œæˆ\n");
+	//exit();
+	system(TO_STRING(start FILE_NAME));//æ‰“å¼€å›¾ç‰‡
 }
