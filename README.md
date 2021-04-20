@@ -9,6 +9,12 @@
 ### main_2.0.c
 从[安卓版本](https://github.com/Small-Totem/Fractal_Android)弄过来了新的图形和渲染模式  
 然后折腾了下用pthread实现了多线程渲染
+
+### fractal_from_1.4.c
+从安卓版本1.4弄过来的，把jni的部分删掉了
+顺手把之前的main.c和main2.0.c删了
+
+
 ***
 ![](a1.png)  
 ![](a2.png)  
